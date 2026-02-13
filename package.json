@@ -1,0 +1,19 @@
+{
+  "name": "@openbot/plugin-browser-tools",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Isolated browser tools for OpenBot",
+  "scripts": {
+    "build": "esbuild index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:ai --external:zod --external:melony --external:@melony/ui-kit --external:playwright"
+  },
+  "dependencies": {
+    "playwright": "^1.45.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.0",
+    "ai": "^6.0.0",
+    "zod": "^3.23.8",
+    "melony": "^0.2.8",
+    "@melony/ui-kit": "^0.1.4"
+  }
+}
