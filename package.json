@@ -1,5 +1,5 @@
 {
-  "name": "@openbot/plugin-browser-tools",
+  "name": "@melony/plugin-browser-tools",
   "version": "1.0.0",
   "type": "module",
   "description": "Isolated browser tools for OpenBot",
