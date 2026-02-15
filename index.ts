@@ -38,7 +38,7 @@ export const browserToolDefinitions = {
 export interface BrowserToolsOptions {
   /**
    * Model configuration. Accepts:
-   * - A string like "openai/gpt-4o" or "gpt-4o"
+   * - A string like "openai/gpt-4o", "anthropic/claude-3-5-sonnet-latest", or just "gpt-4o" / "claude-3-5-sonnet-latest"
    * - A Stagehand model config object: { modelName: "gpt-4o", apiKey?: "..." }
    */
   model?: V3Options["model"];
@@ -73,10 +73,12 @@ export const browserToolsPlugin = (
   let stagehand: Stagehand | undefined;
 
   const resolveModelConfig = () => {
+    console.log("MODEL_OPTIONS:", JSON.stringify(options, null, 2));
     const modelOption = options.model || "openai/gpt-4o";
 
     if (
       typeof modelOption === "object" &&
+      modelOption !== null &&
       "specificationVersion" in (modelOption as any)
     ) {
       // AI SDK version mismatch fix:
@@ -102,8 +104,14 @@ export const browserToolsPlugin = (
       };
     }
 
-    if (typeof modelOption === "string" && !modelOption.includes("/")) {
-      return { model: `openai/${modelOption}` };
+    if (typeof modelOption === "string") {
+      if (!modelOption.includes("/")) {
+        if (modelOption.startsWith("claude-")) {
+          return { model: `anthropic/${modelOption}` };
+        }
+        return { model: `openai/${modelOption}` };
+      }
+      return { model: modelOption };
     }
 
     if (
@@ -113,7 +121,8 @@ export const browserToolsPlugin = (
     ) {
       const config = modelOption as any;
       if (!config.modelName.includes("/")) {
-        return { model: { ...config, modelName: `openai/${config.modelName}` } };
+        const prefix = config.modelName.startsWith("claude-") ? "anthropic" : "openai";
+        return { model: { ...config, modelName: `${prefix}/${config.modelName}` } };
       }
     }
 
@@ -135,8 +144,6 @@ export const browserToolsPlugin = (
       experimental: true,
       disableAPI: true,
       ...options.stagehandConfig,
-      // we dont need it here as model is provided in the agent config
-      // ...modelConfig,
       localBrowserLaunchOptions: {
         ...options.stagehandConfig?.localBrowserLaunchOptions,
         ...(options.userDataDir ? { userDataDir: options.userDataDir } : {}),
@@ -209,8 +216,6 @@ export const browserToolsPlugin = (
 
       try {
         const modelConfig = resolveModelConfig();
-
-        console.log("MODEL_CONFIG:", JSON.stringify(modelConfig, null, 2));
 
         const sh = await ensureStagehand();
         const agent = sh.agent({
