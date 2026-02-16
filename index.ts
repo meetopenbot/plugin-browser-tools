@@ -187,20 +187,43 @@ export const browserToolsPlugin = (
       try {
         const modelConfig = resolveModelConfig();
 
+        console.log("MODEL CONFIG:", JSON.stringify(modelConfig, null, 2));
+
         const sh = await ensureStagehand();
 
         const agent = sh.agent({
-          mode: "dom",
-          model: modelConfig.model,
-          stream: true
+          mode: "hybrid",
+          ...modelConfig,
+          systemPrompt: "You are a helpful browser automation assistant. Achieve the user's goal by navigating, interacting with elements, and extracting information as needed.",
+          stream: true,
         });
 
         const streamResult = await agent.execute({
           instruction,
-          maxSteps: 20
+          maxSteps: 20,
         });
 
         for await (const part of streamResult.fullStream) {
+          if (part.type === "text-delta" || part.type === "reasoning-delta") {
+            const delta = (part as any).textDelta || (part as any).reasoningDelta;
+            if (delta) {
+              yield {
+                type: "browser:status",
+                data: { message: delta },
+              } as BrowserStatusEvent;
+            }
+          }
+
+          if (part.type === "error") {
+            yield {
+              type: "browser:status",
+              data: {
+                message: `Error: ${(part as any).error}`,
+                severity: "error",
+              },
+            } as BrowserStatusEvent;
+          }
+
           if (part.type === "tool-call") {
             const tc = part as any;
             let msg = `Action: ${tc.toolName}`;
@@ -217,8 +240,8 @@ export const browserToolsPlugin = (
             } as BrowserStatusEvent;
           }
 
-          if ((part as any).type === "step-finish") {
-            // yield* yieldState(sh);
+          if (part.type === "tool-result") {
+            yield* yieldState(sh);
           }
         }
 
