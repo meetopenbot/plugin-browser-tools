@@ -73,60 +73,30 @@ export const browserToolsPlugin = (
   let stagehand: Stagehand | undefined;
 
   const resolveModelConfig = () => {
-    console.log("MODEL_OPTIONS:", JSON.stringify(options, null, 2));
-    const modelOption = options.model || "openai/gpt-4o";
+    const model = options.model;
 
-    if (
-      typeof modelOption === "object" &&
-      modelOption !== null &&
-      "specificationVersion" in (modelOption as any)
-    ) {
-      // AI SDK version mismatch fix:
-      // Host might provide a v3 model (AI SDK 6), but Stagehand 3.x expects v2 (AI SDK 5).
-      // We spoof the specificationVersion to v2 to bypass the compatibility check.
-      const model = modelOption as any;
-      const compatibleModel = new Proxy(model, {
-        get(target, prop) {
-          if (prop === "specificationVersion") return "v2";
-          return target[prop];
-        },
-      });
-
-      const rawProvider = model.provider || "openai";
-      const providerId = rawProvider.split(".")[0];
-      const modelId = model.modelId || "gpt-4o";
-
-      return {
-        llmClient: new AISdkClient({
-          model: compatibleModel as any,
-        }),
-        model: `${providerId}/${modelId}`,
-      };
+    if (!model) {
+      return { model: "openai/gpt-4o" };
     }
 
-    if (typeof modelOption === "string") {
-      if (!modelOption.includes("/")) {
-        if (modelOption.startsWith("claude-")) {
-          return { model: `anthropic/${modelOption}` };
-        }
-        return { model: `openai/${modelOption}` };
-      }
-      return { model: modelOption };
+    if (typeof model === "string") {
+      return { model };
     }
 
     if (
-      typeof modelOption === "object" &&
-      modelOption !== null &&
-      "modelName" in (modelOption as any)
+      typeof model === "object" &&
+      "specificationVersion" in model &&
+      (model as any).specificationVersion === "v3"
     ) {
-      const config = modelOption as any;
-      if (!config.modelName.includes("/")) {
-        const prefix = config.modelName.startsWith("claude-") ? "anthropic" : "openai";
-        return { model: { ...config, modelName: `${prefix}/${config.modelName}` } };
+      const v3Model = model as any;
+      const provider = v3Model.config?.provider?.split(".")[0];
+      const modelId = v3Model.modelId;
+      if (provider && modelId) {
+        return { model: `${provider}/${modelId}` };
       }
     }
 
-    return { model: modelOption as any };
+    return { model };
   };
 
   async function ensureStagehand(): Promise<Stagehand> {
@@ -218,15 +188,16 @@ export const browserToolsPlugin = (
         const modelConfig = resolveModelConfig();
 
         const sh = await ensureStagehand();
+
         const agent = sh.agent({
           mode: "dom",
           model: modelConfig.model,
-          stream: true,
+          stream: true
         });
 
         const streamResult = await agent.execute({
           instruction,
-          maxSteps: 10,
+          maxSteps: 20
         });
 
         for await (const part of streamResult.fullStream) {
