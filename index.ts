@@ -197,7 +197,7 @@ export const browserToolsPlugin = (
         const agent = sh.agent({
           mode: "hybrid",
           ...modelConfig,
-          systemPrompt: options.systemPrompt || "You are a helpful browser automation assistant. Achieve the user's goal by navigating, interacting with elements, and extracting information as needed.",
+          systemPrompt: options.systemPrompt || "You are a helpful browser automation assistant. Achieve the user's goal by navigating, interacting with elements, and extracting information as needed.   Make responses concise and to the point.",
           stream: true,
         });
 
