@@ -47,6 +47,9 @@ export interface BrowserToolsOptions {
 
   /** The directory to store the browser's user data */
   userDataDir?: string;
+
+  // system prompt
+  systemPrompt?: string;
 }
 
 export interface BrowserStatusEvent extends Event {
@@ -194,7 +197,7 @@ export const browserToolsPlugin = (
         const agent = sh.agent({
           mode: "hybrid",
           ...modelConfig,
-          systemPrompt: "You are a helpful browser automation assistant. Achieve the user's goal by navigating, interacting with elements, and extracting information as needed.",
+          systemPrompt: options.systemPrompt || "You are a helpful browser automation assistant. Achieve the user's goal by navigating, interacting with elements, and extracting information as needed.",
           stream: true,
         });
 
