@@ -1,7 +1,7 @@
 import { MelonyPlugin, Event } from "melony";
 import { z } from "zod";
 import * as fs from "fs";
-import { Stagehand, AISdkClient } from "@browserbasehq/stagehand";
+import { Stagehand } from "@browserbasehq/stagehand";
 import type { V3Options } from "@browserbasehq/stagehand";
 import { ui } from "@melony/ui-kit/server";
 
