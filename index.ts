@@ -241,7 +241,7 @@ export const browserToolsPlugin = (
           }
 
           if (part.type === "tool-result") {
-            yield* yieldState(sh);
+            // yield* yieldState(sh);
           }
         }
 
