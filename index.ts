@@ -325,7 +325,7 @@ export const browserToolsUIPlugin =
     builder.on(
       "browser:status" as any,
       async function* (event: BrowserStatusEvent) {
-        yield ui.event(ui.status(event.data.message, event.data.severity));
+        yield ui.event(ui.text(event.data.message, { size: "xs", color: event.data.severity === "error" ? "destructiveForeground" : "foreground" }));
       }
     );
 
@@ -334,8 +334,16 @@ export const browserToolsUIPlugin =
       async function* (event: BrowserStateUpdateEvent) {
         if (event.data.screenshot) {
           yield ui.event(
-            ui.resourceCard(event.data.title, event.data.url, [
-              ui.image(`data:image/jpeg;base64,${event.data.screenshot}`),
+            ui.box({ border: true, padding: "md", radius: "md" }, [
+              ui.col({ gap: "md" }, [
+                ui.col({ gap: "xs" }, [
+                  ui.text(event.data.title, { size: "sm" }),
+                  ui.text(event.data.url, { size: "xs", color: "mutedForeground" }),
+                ]),
+                ui.box({ border: true, radius: "md" }, [
+                  ui.image(`data:image/jpeg;base64,${event.data.screenshot}`),
+                ]),
+              ]),
             ])
           );
         }
